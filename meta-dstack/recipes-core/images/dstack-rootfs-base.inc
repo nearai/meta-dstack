@@ -19,6 +19,7 @@ IMAGE_INSTALL = "\
     cryptsetup \
     curl \
     jq \
+    age \
     chrony \
     chronyc \
     dstack-zfs \
