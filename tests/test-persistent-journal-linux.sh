@@ -10,7 +10,10 @@ fi
 repo_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 helper="$repo_root/meta-dstack/recipes-core/dstack-persistent-journal/files/dstack-persist-journal"
 tmp_dir=$(mktemp -d)
-trap 'rm -rf "$tmp_dir"' EXIT
+cleanup() {
+	sudo find "$tmp_dir" -depth -delete
+}
+trap cleanup EXIT
 
 sudo env HELPER="$helper" TEST_ROOT="$tmp_dir/integration" \
 	unshare --mount --propagation private bash -euo pipefail <<'EOF'
