@@ -1,0 +1,17 @@
+[Unit]
+Description=Persist dstack System Journal
+Requires=dstack-prepare.service var-volatile.mount
+After=dstack-prepare.service systemd-journald.service var-volatile.mount
+Before=app-compose.service containerd.service docker.service dstack-guest-agent.service wg-checker.service
+OnFailure=reboot.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/dstack-persist-journal /var/volatile/dstack/persistent/var/log/journal
+RemainAfterExit=yes
+StandardOutput=journal+console
+StandardError=journal+console
+FailureAction=reboot
+
+[Install]
+WantedBy=multi-user.target

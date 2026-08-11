@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# SPDX-License-Identifier: MIT
+
+set -euo pipefail
+
+log() {
+	printf '%s\n' "$*" >&2
+}
+
+if [[ $# -lt 1 || $# -gt 2 ]]; then
+	log "Usage: $0 PERSISTENT_JOURNAL_DIR [JOURNAL_MOUNTPOINT]"
+	exit 64
+fi
+
+persistent_journal_dir=$1
+journal_mountpoint=${2:-/var/log/journal}
+
+if [[ $persistent_journal_dir != /* || $journal_mountpoint != /* ]]; then
+	log "Journal paths must be absolute"
+	exit 64
+fi
+
+log "Preparing persistent system journal at $persistent_journal_dir"
+mkdir -p "$persistent_journal_dir" "$journal_mountpoint"
+chown root:systemd-journal "$persistent_journal_dir" "$journal_mountpoint"
+chmod 2755 "$persistent_journal_dir" "$journal_mountpoint"
+
+if ! mountpoint -q "$journal_mountpoint"; then
+	mount --rbind "$persistent_journal_dir" "$journal_mountpoint"
+fi
+
+source_identity=$(stat -Lc '%d:%i' "$persistent_journal_dir")
+mount_identity=$(stat -Lc '%d:%i' "$journal_mountpoint")
+if [[ $source_identity != "$mount_identity" ]]; then
+	log "$journal_mountpoint is not backed by $persistent_journal_dir"
+	exit 1
+fi
+
+# Storage=auto keeps early boot records in /run until this persistent path is
+# available. --flush switches journald to the mounted path and waits for the
+# runtime journal copy to complete; --sync then forces all pending writes out.
+journalctl --flush
+journalctl --sync
+log "Persistent system journal is mounted and synchronized"

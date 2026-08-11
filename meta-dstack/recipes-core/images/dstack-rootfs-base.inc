@@ -14,6 +14,7 @@ IMAGE_INSTALL = "\
     docker-moby \
     docker-compose \
     dstack-guest \
+    dstack-persistent-journal \
     wireguard-tools \
     cryptsetup \
     curl \

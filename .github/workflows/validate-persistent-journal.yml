@@ -1,0 +1,38 @@
+name: Validate Persistent Journal
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/validate-persistent-journal.yml'
+      - 'meta-dstack/recipes-core/dstack-persistent-journal/**'
+      - 'meta-dstack/recipes-core/images/dstack-rootfs-base.inc'
+      - 'tests/test-persistent-journal*.sh'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/validate-persistent-journal.yml'
+      - 'meta-dstack/recipes-core/dstack-persistent-journal/**'
+      - 'meta-dstack/recipes-core/images/dstack-rootfs-base.inc'
+      - 'tests/test-persistent-journal*.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate helper and recipe wiring
+        run: tests/test-persistent-journal.sh
+
+      - name: Validate persistent mount across restart boundary
+        run: tests/test-persistent-journal-linux.sh
+
+      - name: Lint shell scripts
+        run: shellcheck meta-dstack/recipes-core/dstack-persistent-journal/files/dstack-persist-journal tests/test-persistent-journal*.sh
